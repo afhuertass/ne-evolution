@@ -22,7 +22,9 @@ class Gene():
         self.rnd = np.random.randint(10000)
         self.rnd2 = np.random.randint(100)
         self.act = None
-        
+
+        self.added_to_graph = False 
+        """
         with self.graph.as_default():
             
             if self.input_gene:      
@@ -32,35 +34,48 @@ class Gene():
             else :
                 self.act = tf.Variable( tf.constant( -1.0 ,shape=[],dtype=tf.float32 )  ,dtype=tf.float32 ).initialized_value()
         
-                
+        """     
         
         
-    def activation2(self):
-
+    def activation2(self, graph = None):
+        if not graph:
+            print("PLEASE FEED GRAPH")
+            
         if self.input_gene:
-            with self.graph.as_default():
-                if self.input_gene:
-                    self.act = tf.placeholder( tf.float32 , shape=() )
-                    print("wtf men")
+            with graph.as_default():
+                
+                self.act = tf.placeholder( tf.float32 , shape=() )
+                print("wtf men")
                     
 
         ws = []
         xs = []
         for conn in self.connex:
+            if conn.source_gene.act == None:
+                continue 
             ws.append(conn.get_weight() )
             xs.append(conn.source_gene.act )
 
         if not ws  or not xs:
+            
             return False
         
-                  
-        with self.graph.as_default():
+       
+        with graph.as_default():
             ws = tf.Variable( np.array(ws) , name="ws" ,dtype=tf.float32 ).initialized_value()
             xs = tf.pack( xs ,axis=0  )
             self.act = tf.Variable( tf.sigmoid( tf.reduce_sum( tf.mul(ws,xs)  )) , name="activ" ).initialized_value()
             
-     
-                 
+
+
+    def set_added_to_graph(self, added= False):
+
+        self.added_to_graph = added
+
+    def isAdded(self):
+
+        return self.added_to_graph
+    
     def add_conn(self  , conn):
         # por el momento conexion agregar luego gestionar
         self.connex.append(conn)

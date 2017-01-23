@@ -31,19 +31,27 @@ class Trainer:
         
     def train(self):
 
-        for genome in self.population.get_genes():
-            genome.update_conns()
-            genome.build_graph(session = self.tf_sess)
+        #for genome in self.population.get_genes():
+          #  genome.update_conns()
+           # genome.build_graph(session = self.tf_sess)
 
         #tf.get_default_graph().finalize()
         
         for gen in range(0, self.max_gen ):
             max_score_gen = 0
             genome_count = 1
+            new_graph = tf.Graph()
             for genome in self.population.get_genes():
+                genome.Draw()
+                genome.update_conns( graph_n = new_graph )
+                genome.build_graph( graph_n = new_graph)
+
                 
+            new_session = tf.Session( graph = new_graph)
+            for genome in self.population.get_genes():
+
                 #genome.update_conns()
-                #genome.build_graph()
+                #genome.build_graph( graph_n = new_graph )
                 outputs = []
                 print("Generacion: "  + str(gen) )
                 for step in range(0, self.max_moves ):
@@ -52,13 +60,10 @@ class Trainer:
                     #print("jugadas:" + str(step) )
                     
                     list_train = self.driver_data.get_train_list( step )
-                    
-                    # lista de numeros
-                    #genome.feed( list_train  )
-                    #alimentar la lista en los inputs.
-                    # build el tensor flow graph
-                    
-                    response_genome = genome.launch_session(get_value= True, inputs= list_train, session= self.tf_sess)
+                    response_genome = genome.launch_session(get_value= True, inputs= list_train, session= new_session )
+                    if not response_genome:
+                        # no hubo respuesta de ningun nodo
+                        response_genome = [ -1 ]
                     print(response_genome)
                     outputs.append( response_genome[0]  )
                     self.handle_response( response_genome )
@@ -81,10 +86,10 @@ class Trainer:
             tf.reset_default_graph()
                 
             self.population.organize_species()
-            self.population.mutate()
+            #self.population.mutate()
             #self.population.reproduce()
                                 
-            self.population.update_conns()
+           # self.population.update_conns()
 
             
             #self.population.re_add()

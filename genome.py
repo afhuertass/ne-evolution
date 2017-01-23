@@ -91,7 +91,7 @@ class Genome():
         gene1 = self.get_rand_gene()
         gene2 = self.get_rand_gene()
         
-        while gene1[0] == gene2[0]:
+        while gene1[0] == gene2[0] and not ( gene1[0].isInput() and gene2[0].isInput() )  :
             ## work it until yo get different genes
             
             gene2 = self.get_rand_gene()
@@ -123,7 +123,7 @@ class Genome():
         return edge
     
     def get_rand_gene(self):
-
+        
         gene = random.sample(self.genome.nodes() , 1)
         return gene
 
@@ -132,30 +132,72 @@ class Genome():
         self.genome.add_node(gn)
         
   
-    def build_graph(self, session = None):
-        if not session:
+    def build_graph(self, session = None  , graph_n = None):
+        
+        if not graph_n:
+            print("PLEASE FEED SOME GRAPH")
             return True
         
         
-        for gene in self.genome.nodes_iter():
-            gene.activation2()
-            self.activate_successors( gene )
+        for gene in self.outputGenes:
+            #gene.activation2( graph = graph_n )
+            self.activate_predecessors( gene  , graph_n = graph_n )
+            
+            #gene.activation2(graph = graph_n )
+            
 
-    def activate_successors(self , gene):
+    def activate_predecessors(self , gene , graph_n = None ):
+        # change to active predecessors
+        if gene.isAdded():
+            return 
+        ws = []
+        xs = []
+       # print( len( self.genome.predecessors(gene)  ) )
+        for pred in self.genome.predecessors(gene  ):
+            # pred es nodo precedesor
+            # por cada nodo precedessor debemos colectar la operacion
+            # peso*ops nodo
+            if not pred.isAdded():
+                #ws.append( self.genome[pred][gene]['weight'] )
+                
+                self.activate_predecessors( pred  , graph_n = graph_n  )
+                
+                pred.set_added_to_graph(added = True)
+                #pred.activation2( graph = graph )
+                ws.append( self.genome[pred][gene]['weight'] )
+                xs.append( pred.act  )
+                
 
-        for suss in self.genome.successors(gene):
-            suss.activation2()
+        print(xs)
+        print(ws)
+        with graph_n.as_default():
+            if gene.input_gene:
+                print("PLACE HOLDER")
+                gene.act = tf.placeholder( tf.float32 , shape = () )
+                gene.set_added_to_graph(added = True )
 
+            if len(ws) == 0 or len(xs) == 0:
+                gene.act = tf.Variable(tf.zeros( [] ) , dtype=tf.float32)
+                gene.set_added_to_graph(added = True )
+            else:
+                ws = tf.Variable( np.array( ws) ,  dtype = tf.float32 )
+                xs = tf.pack( xs , axis = 0 )
+            
+                gene.act = tf.sigmoid(tf.reduce_sum( tf.mul( xs, ws) )   )
+                gene.set_added_to_graph(added = True )
 
-    def update_conns(self):
+    def update_conns(self, graph_n = None):
 
-        for gene in self.genome.nodes_iter():
-            gene.clear_conns()
-            for pred in self.genome.predecessors(gene):
-                weight = self.genome[pred][gene]['weight']
-                NewConn = Conn( pred , weight )
-                gene.add_conn( NewConn )
-        
+        with graph_n.as_default():
+            for gene in self.genome.nodes_iter():
+                gene.clear_conns()
+                
+                for pred in self.genome.predecessors(gene):
+                    weight = self.genome[pred][gene]['weight']
+                    NewConn = Conn( pred , weight )
+                    gene.add_conn( NewConn )
+                   
+                    
     def launch_session(self, get_value = False , get_index = False, inputs = None, session = None):
 
         if not session:
@@ -172,15 +214,18 @@ class Genome():
         with self.graph.as_default():
             init = tf.global_variables_initializer()
             
-        #init = tf.initialize_all_variables()
+         #init = tf.initialize_all_variables()
         resp = 0
         
         print( inputs )
-        
+        print( placeholders )
             
         #with session  as sess:
         for node in self.outputGenes:
                 #sess.run( init , feed_dict =   {} )
+            if node.act == None:
+                print("this happen")
+                continue 
             a =session.run( node.act , feed_dict  = { i : d for i,d in zip( placeholders ,inputs) } )
                 #a =  sess.run( node.act , feed_dict  = { i : d for i,d in zip( placeholders ,inputs) }   ) 
                 #a =  sess.run( node.act , feed_dict  = { placeholders[0] : 1.0 ,  }   ) 
@@ -189,6 +234,11 @@ class Genome():
 
             
 
+        if len( out ) == 0:
+            # ningun nodo de salida dio respuesta
+            
+            print (" OUT NODEs GIVE NO  ANWSER")
+            return False
         if get_index:
             #with session as sess:
             out = tf.pack( out , axis = 0)
