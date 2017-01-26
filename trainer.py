@@ -42,7 +42,7 @@ class Trainer:
             genome_count = 1
             new_graph = tf.Graph()
             for genome in self.population.get_genes():
-                genome.Draw()
+                #genome.Draw()
                 genome.update_conns( graph_n = new_graph )
                 genome.build_graph( graph_n = new_graph)
 

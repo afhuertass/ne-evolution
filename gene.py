@@ -34,7 +34,10 @@ class Gene():
             else :
                 self.act = tf.Variable( tf.constant( -1.0 ,shape=[],dtype=tf.float32 )  ,dtype=tf.float32 ).initialized_value()
         
-        """     
+        """
+
+        self.indexLayer = 0
+        
         
         
     def activation2(self, graph = None):
