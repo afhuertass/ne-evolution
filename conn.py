@@ -2,7 +2,7 @@
 import numpy as np
 
 from gene import Gene
-
+# connection between genes
 class Conn():
 
     def __init__(self, source_gene , weight ):
