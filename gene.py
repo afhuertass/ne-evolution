@@ -10,11 +10,6 @@ import tensorflow as tf
 
 class Gene():
     def __init__(self, ws , input_gene = False, output_gene=False , bias_gene = False, response =  None , graph = None, indexLayer = 0 ):
-        # pesos  y funcion de activacion
-        
-        #if not graph:
-         #   print("QUE PASO EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEee")
-          #  return
        
         self.graph = graph 
         self.ws = ws
@@ -27,18 +22,7 @@ class Gene():
         self.act = None
 
         self.added_to_graph = False 
-        """
-        with self.graph.as_default():
-            
-            if self.input_gene:      
-                self.act = tf.placeholder( tf.float32 , shape=() )
-                print("-") 
-                assert self.act.graph is self.graph 
-            else :
-                self.act = tf.Variable( tf.constant( -1.0 ,shape=[],dtype=tf.float32 )  ,dtype=tf.float32 ).initialized_value()
-        
-        """
-
+       
         self.indexLayer = indexLayer
 
         if bias_gene:
@@ -119,7 +103,7 @@ class Gene():
         return  hash( self.rnd )^hash(repr( self ) ) 
 
     def __eq__(self, other):
-        print("asdasdasdasdasd")
+       
         return ( self.__hash__ == other.__hash__  and self.rnd == other.rnd and self.rnd2 == other.rnd2 )
 
     def __cmp__(self, other):

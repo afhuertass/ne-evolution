@@ -17,32 +17,8 @@ class Genome():
         self.calculated_fitness = 0
         
         self.genome = nx.DiGraph()
-        #
-        """
-        Los genomas deben contener un nuevo parametro, numero de  unidades ocultas
-        por defecto es 1,  una nueva variable numerica indicando la capa a la que pertenece la unidad sera agregada
-
-        
-
-        las unidades de input tienen por valor N = 0 
-        las unidades output tienen valor de N +1 
-
-        el proceso de agregar una conexion: toma un nodo en la capa k 
-        y lo conecta a un nodo en la capa k + 1. k debe ser un aleatorio entre cero y  N 
-         paso 1 : obtener un aleatorio entre 0 y N, llamarlo k  
-         obtener un nodo aleatorio de la capa k. 
-         obtener un nodo aleatorio en la capa k +1 . si no hay una conexion agregarla. si la hay volver al paso anterior
-         conectar los dos.
-
-        de esta forma las redes creadas son siempre feedforward and there is no need for special modification of the other process lets start with it.
-
-
-
-        el proceso de agregar un nodo entre coneccion. no requiere modificacion.
-
        
-        """
-        N = 16 # input genes
+        N = 16 # input
         self.inputGenes = []
         self.outputGenes = []
         self.graph = graph 
@@ -178,9 +154,7 @@ class Genome():
 
     def add_node_hidden(self):
 
-        # agregar un nodo a una capa oculta
-        # y conectarlo
-        # capa oculta aleatoria
+       
         hiddenLayer = random.randint( 1 , self.HLayers )
 
         nextLayer = hiddenLayer + 1
@@ -259,12 +233,11 @@ class Genome():
 
         
         for gene in self.outputGenes:
-            #gene.activation2( graph = graph_n )
-            #gene.set_added_to_graph(True)
+            
             self.activate_predecessors( gene  , graph_n = self.graph )
-            #print("OUTPUT NODE ADDED TO GRAPH ")
+            
             gene.set_added_to_graph(added = True)
-            #gene.activation2(graph = graph_n )
+         
 
         for gene in self.inputGenes:
 
@@ -272,23 +245,17 @@ class Genome():
                 with graph_n.as_default():
                     gene.act = tf.placeholder( tf.float32 , shape = () )
                     gene.set_added_to_graph(added = True )
-                    #print("RE ADDING PERRRO ")
-                    #assert gene.act.graph is graph_n 
-                    #print( assert )
+               
 
     def activate_predecessors(self , gene , graph_n = None ):
-        # change to active predecessors
+       
         
         ws = []
         xs = []
-        # print( len( self.genome.predecessors(gene)  ) )
+    
         prede_zozios = ( n for n in self.genome.predecessors(gene) )
         for pred in prede_zozios:
-            # pred es nodo precedesor
-            # por cada nodo precedessor debemos colectar la operacion
-            # peso*ops nodo
-           
-            #print( pred.isAdded() )
+          
             if not pred.isAdded():
                 
                

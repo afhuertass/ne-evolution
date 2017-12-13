@@ -262,4 +262,4 @@ class ImageProcessing():
         
     def draw(self, im1 , im2 , kp_pairs ):
 
-        print ("fuckkkkkkk")
+        print ("")
