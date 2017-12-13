@@ -31,7 +31,7 @@ class ImageProcessing():
 
         self.key_train , self.desc_train = self.SURF.detectAndCompute( self.train_image1 , None)
 
-        print( self.desc_train.shape )
+        #print( self.desc_train.shape )
         # setup FLANN
         flann_index_kdtree = 1
         flann_index_lsh = 6
@@ -53,7 +53,8 @@ class ImageProcessing():
 
 
         self.templates_imgs = []
-        
+
+        self.load_templates()
         
     def process(self , query_image=3):
         #query image is a image to be tested
@@ -175,7 +176,7 @@ class ImageProcessing():
             # alto y ancho de la casilla
         img_opencv = np.array(img)
         
-        self.load_templates()
+       # self.load_templates()
         data = [] 
 
         #img = cv2.imread( './train_images/test.png')

@@ -55,7 +55,7 @@ class DriverData():
         # restart
         self.restart = self.driver.find_element_by_class_name("restart-button")
         
-    def get_train_list(self):
+    def get_train_list(self, step = 0):
 
         # it should return a list from the image
         self.driver.execute_script( 'window.focus();' )
@@ -66,7 +66,7 @@ class DriverData():
         
         return data_train
 
-    def read_score(self):
+    def read_score(self, outputs):
 
         
         score_element = self.driver.find_element_by_class_name("score-container")
@@ -81,11 +81,11 @@ class DriverData():
 
     def handle_response(self , int_key):
 
-        self.send_keystroke(self, int_key)
+        self.send_keystroke( int_key)
 
         return True 
     def send_keystroke(self, key):
-
+        key = int(key[0])
         if key == 0:
             self.body.send_keys( Keys.ARROW_LEFT )
             
@@ -99,7 +99,7 @@ class DriverData():
             self.body.send_keys( Keys.ARROW_DOWN )
             
         
-        time.sleep(0.1)
+        time.sleep(0.15)
         return False
 
     def close_driver(self):
@@ -136,10 +136,10 @@ class XORDriver():
 
         
         fit = np.power( self.outputs - np.array( outputs  , np.float64) , 2 )
-        print("fiiitt")
-        print(outputs)
-        print(self.outputs)
-        print(  fit ) 
+        #print("fiiitt")
+        #print(outputs)
+        #print(self.outputs)
+        #print(  fit ) 
         fit = 10 - np.fabs(np.sqrt(  np.sum( fit ) ) )
         fit = np.power( fit , 2 )
        

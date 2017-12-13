@@ -38,8 +38,8 @@ class Population():
 
         self.prob_mutation_pert = 0.9 # probabildiad de mutar perturbando los valores
 
-        self.prob_new_link = 0.3
-        self.prob_new_node = 0.5
+        self.prob_new_link = 0.03
+        self.prob_new_node = 0.05
 
         self.c1 = 0.1
         self.c2 = 0.1
@@ -55,24 +55,26 @@ class Population():
 
         ## hacer mutar a la pipol
         for genome in self.population:
-
+            if genome.getChamp(): # campeones no mutan
+                #print("CAMPEONES NO MUTAN: " + str(genome.calculated_fitness ) )
+                
+                continue
+           
             nrd = random.random()
+                
             if nrd <= self.prob_mutation :
                 # debe mutar
-                print("MUTAAAAAAAAAAAAAAAA")
-                nnrd = random.random()
-                if nnrd <= self.prob_mutation_pert:
-                    genome.mutate_perturbation()
-                else:
-                    genome.mutate_new_rnd()
+                #print("MUTAAAAAAAAAAAAAAAA WEIGHTS ")
+                genome.mutate_weights() # mutate de weights
 
             nrd = random.random()
 
             if nrd <= self.prob_new_link :
 
                 genome.mutate_new_link()
-                print("MUTAAAAAAAAAAAAAAAA")
+                #print("MUTAAAAAAAAAAAAAAAA  NEW  LINK ")
             nrd = random.random()
+            
             if nrd <= self.prob_new_node:
 
                 genome.mutate_new_node()
@@ -83,9 +85,9 @@ class Population():
             genome.update_conns()
             
     def re_add(self):
-
+        #print ("re-adding pirobos")
         for genome in self.population:
-
+            #print ("re-adding pirobos")
             genome.re_add()
 
     def organize_species(self):
@@ -114,6 +116,7 @@ class Population():
                 #agregas especie a la lista de especies
                 #self.species.append( new_specie )
 
+                
         print("numero especies")
         print(len(self.species) )
         
@@ -124,49 +127,70 @@ class Population():
         new_population = []
 
         all_species = []
-        
+       
         for specie in self.species:
             genomes_in_specie = []
             for genome in self.population:
 
                 if specie == genome.specie:
                     genomes_in_specie.append( genome )
-            print("FUUUUU")
+            
             if len(genomes_in_specie) > 0:
                 all_species.append( genomes_in_specie )
         
         for specie in all_species:
             new_specie = []
             specie.sort( key=lambda x : x.calculated_fitness , reverse=True)
-            
-            champion = specie[0] 
-            #new_specie.append( champion )  el campeon pasa sin
-            new_population.append( champion )
-            reproducing = True
+
+            champions = []
+            champion = specie[0]
             specie_size = len(specie)
+            
+            reproducing = True
             n_offspring = 0
+            # si la especie tiene mas de 5 individuos 
+            if len(specie) >= 10:
+                champions = specie[:5]
+                n_offspring = 5
+                del specie[-5:]
+            else:
+                champions.append( champion )
+                n_offspring =  1 
+            #new_specie.append( champion )  el campeon pasa sin
+            for champ in champions:
+                
+                champ.setChampion( champ = True )
+                #print( "champs: " + str( champ.calculated_fitness) )
+                new_population.append( champ )
+
+                
+           
+           
+            
             while reproducing:
                 # generar offspring
-                #parent1 = random.choice(specie)
-                parent2 = random.choice(specie)
-                offspring = self.cross.combine_genomes(champion,parent2)
+                parent1 = random.choice(champions) # padre 1 es campeon 
+                
+                parent2 = random.choice(specie) # padre 2 es un random
+                
+                offspring = self.cross.combine_genomes(parent1,parent2)
                 #new_specie.append( offspring )
-
+                
                 new_population.append( offspring  )
                 
                 n_offspring = n_offspring + 1
-                if  n_offspring >= specie_size-1 :
+                if  n_offspring >= specie_size :
                     reproducing = False
-                print("reproducing")
-                print(n_offspring)
-                print( specie_size )
-            new_species.append( new_specie )
+                #print("reproducing")
+                #print(n_offspring)
+                #print( specie_size )
+            
 
         #self.species = []
         #self.species = new_species[:]
 
         self.population = []
-        self.population = new_population [:]
+        self.population = new_population[:]
                 
     def compatibility(self , genome1 , genome2 ):
         N = 0 # total genes
@@ -215,7 +239,8 @@ class Population():
         
     def get_genes(self):
 
-        return (self.population)
+        self.population.sort( key=lambda x : x.calculated_fitness , reverse=True)
+        return ( self.population )
 
     
     def new_specie(self, size=6, chars=string.ascii_uppercase + string.digits):

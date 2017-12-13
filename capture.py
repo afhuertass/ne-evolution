@@ -19,8 +19,9 @@ class Capture():
     def captureScreen(self):
 
         #self.frame = ImGrab.grab(bbox=(self.Point1[0], self.Point2[1] , self.Point2[0], self.Point2[1]) )
-        self.frame = ImGrab.grab(bbox=(self.x1 , self.y1 , self.x2 , self.y2 ) )
-        return self.frame
+        frame = ImGrab.grab(bbox=(self.x1 , self.y1 , self.x2 , self.y2 ) )
+        
+        return frame
         
         
     

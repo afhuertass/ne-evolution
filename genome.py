@@ -5,6 +5,7 @@ import random
 from gene import Gene
 from conn import Conn
 import matplotlib.pyplot as plt
+import string
 
 import tensorflow as tf 
 # Genome is a a coleccion on genes y sus relaciones.. es un grafo !
@@ -45,36 +46,62 @@ class Genome():
         self.inputGenes = []
         self.outputGenes = []
         self.graph = graph 
-      
-      
+
+        self.HLayers = N_hidden
+
+        
+        #adding  inputnodes
         for i in range(0,InputUnits):
-            gn = Gene( 1.0 ,input_gene = True  , response=1.0, graph= self.graph)
+            gn = Gene( 1.0 ,input_gene = True  , response=1.0, graph= self.graph, indexLayer = 0 )
             self.inputGenes.append(gn)
             self.genome.add_node(gn)
-            
+
+        #adding outputnodes
         for i  in range(0, OutputUnits):
-            gn =  Gene(0.0, output_gene = True , graph = self.graph)
+            gn =  Gene(0.0, output_gene = True , graph = self.graph, indexLayer = N_hidden + 1 )
             self.outputGenes.append( gn )
             self.genome.add_node(gn)
 
 
-        
+
+        bias = Gene(0.0 , bias_gene=True , graph = self.graph, indexLayer = 0 )
+        self.genome.add_node(bias)
         # random conection
        
-        self.add_conn_rnd()
-        self.add_conn_rnd()
+        #self.add_conn_rnd()
+        #self.add_conn_rnd()
 
+        self.add_connection2()
+        self.add_connection2()
+
+        self.add_node_hidden()
+        
         self.specie = ""
+
+        self.champion = False
+
+        self.name = self.new_name()
+
+    def setChampion(self, champ = False):
+
+        self.champion = champ 
+
+    def getChamp(self):
+        
+        return self.champion
 
     def set_specie( self, specie_new):
 
         self.specie = specie_new
 
     def re_add(self):
-        self.tf_session = tf.Session()
+        #self.tf_session = tf.Session()
+        self.champion = False
+        
         for gene in self.genome.nodes_iter():
-            gene.re_add()
-
+            
+            gene.set_added_to_graph(added = False )
+       
             
         
     def add_gene_rnd(self , gene):
@@ -83,8 +110,8 @@ class Genome():
         self.inovationNumber = self.inovationNumber + 1 
         edge = self.get_rand_edge()
         #print(edge)
-        weight_1 = random.random()
-        weight_2 = random.random()
+        weight_1 = self.getRnd()
+        weight_2 = self.getRnd()
         
         self.genome.add_edge( edge[0][0] , gene ,  weight=weight_1 )
         self.genome[edge[0][0]][gene]['inN'] = self.inovationNumber
@@ -125,7 +152,60 @@ class Genome():
         self.add_genes( gene1[0] , gene2[0] ,  weight )
         
         return True
+
+    def add_connection2(self):
+        """
+        ADD A CONEXTION BETWEEN AN EXISTING NODE AT LAYER K, TO A NODE IN LAYER K+1
         
+        """
+        k = random.randint( 0 , self.HLayers ) # 0 1
+       
+        gene_k =  self.get_rand_gene( indexLayer = k )
+        gene_k_1 = self.get_rand_gene( indexLayer = k +1 )
+
+        if not gene_k :
+            # no hay gene en la capa k, agregar uno
+            gene_k =  Gene(0.0,graph = self.graph, indexLayer = k )
+            self.genome.add_node(gene_k)
+
+        if not gene_k_1 :
+            gene_k_1 = Gene(0.0,graph = self.graph, indexLayer = k+1 )
+            self.genome.add_node(gene_k_1)
+
+        weight = self.getRnd()
+        
+        self.add_genes(gene_k , gene_k_1 , weight)
+
+    def add_node_hidden(self):
+
+        # agregar un nodo a una capa oculta
+        # y conectarlo
+        # capa oculta aleatoria
+        hiddenLayer = random.randint( 1 , self.HLayers )
+
+        nextLayer = hiddenLayer + 1
+        prevLayer = hiddenLayer -1
+
+        genePrev = self.get_rand_gene(indexLayer = prevLayer)
+        geneNext = self.get_rand_gene(indexLayer = nextLayer )
+        
+
+        if not genePrev:
+            genePrev = Gene(0.0,graph = self.graph, indexLayer = prevLayer )
+            self.genome.add_node(genePrev)
+        if not geneNext:
+            geneNext = Gene(0.0,graph = self.graph, indexLayer = nextLayer )
+            self.genome.add_node( geneNext )
+
+        geneHidden = Gene(0.0,graph = self.graph, indexLayer = hiddenLayer )
+
+        w1 = self.getRnd()
+        self.add_genes( genePrev , geneHidden ,  w1 )
+        w1 = self.getRnd()
+        self.add_genes( geneHidden , geneNext , w1)
+            
+        
+    
     def add_genes(self , gene1 , gene2 , weight_v  = 1.0):
         ##MUTACION AGREGAR GENE
         self.inovationNumber = self.inovationNumber + 1
@@ -141,16 +221,24 @@ class Genome():
 
         
 
-    def get_rand_edge(self ):
+    def get_rand_edge(self):
 
         edge = random.sample( self.genome.edges() , 1)
         return edge
     
-    def get_rand_gene(self):
-        
-        gene = random.sample(self.genome.nodes() , 1)
-        return gene
+    def get_rand_gene(self,  indexLayer = 0 ):
+        layerGenes = [] 
+        for gene in self.genome.nodes_iter():
+            if gene.getIndexLayer() == indexLayer:
+                layerGenes.append(gene)
 
+        if not layerGenes:
+            return None
+        
+        gene = random.choice(layerGenes)
+        return gene # random gene in de layer indexLayer
+
+    
     def add_gene(self, gn):
         #gn = Gene(0.0)
         self.genome.add_node(gn)
@@ -162,14 +250,31 @@ class Genome():
             print("PLEASE FEED SOME GRAPH")
             return True
         
+        self.graph = graph_n
+        for gene in  self.genome.nodes_iter():
+
+            if gene.isAdded():
+                
+                gene.set_added_to_graph(added = False)
+
         
         for gene in self.outputGenes:
             #gene.activation2( graph = graph_n )
             #gene.set_added_to_graph(True)
-            self.activate_predecessors( gene  , graph_n = graph_n )
-            gene.set_added_to_graph(True)
+            self.activate_predecessors( gene  , graph_n = self.graph )
+            #print("OUTPUT NODE ADDED TO GRAPH ")
+            gene.set_added_to_graph(added = True)
             #gene.activation2(graph = graph_n )
-            
+
+        for gene in self.inputGenes:
+
+            if  gene.act  == None or not gene.isAdded() :
+                with graph_n.as_default():
+                    gene.act = tf.placeholder( tf.float32 , shape = () )
+                    gene.set_added_to_graph(added = True )
+                    #print("RE ADDING PERRRO ")
+                    #assert gene.act.graph is graph_n 
+                    #print( assert )
 
     def activate_predecessors(self , gene , graph_n = None ):
         # change to active predecessors
@@ -182,34 +287,48 @@ class Genome():
             # pred es nodo precedesor
             # por cada nodo precedessor debemos colectar la operacion
             # peso*ops nodo
+           
+            #print( pred.isAdded() )
             if not pred.isAdded():
+                
+               
                 #ws.append( self.genome[pred][gene]['weight'] )
                 
-                self.activate_predecessors( pred  , graph_n = graph_n  )
+                self.activate_predecessors( pred  , graph_n = self.graph  )
                 
                 pred.set_added_to_graph(added = True)
                 #pred.activation2( graph = graph )
+                w = self.genome[pred][gene]['weight']
+                
+                
                 ws.append( self.genome[pred][gene]['weight'] )
                 xs.append( pred.act  )
                 
                 
-        print(xs)
-        print(ws)
+    
         with graph_n.as_default():
-            if gene.input_gene:
-                print("PLACE HOLDERssssssss")
-                gene.act = tf.placeholder( tf.float32 , shape = () )
-                gene.set_added_to_graph(added = True )
 
-            if len(ws) == 0 or len(xs) == 0:
-                gene.act = tf.Variable(tf.zeros( [] ) , dtype=tf.float32)
+            if gene.bias_gene:
+
+                 gene.act = tf.Variable( tf.constant(1.0 , shape=[] , dtype=tf.float32) , dtype = tf.float32  )
+                 gene.set_added_to_graph(added = True )
+            
+            if gene.input_gene:
+               # print("PLACE HOLDERssssssss")
+                gene.act = tf.placeholder( tf.float32 , shape = () )
+                #print( gene.act )
                 gene.set_added_to_graph(added = True )
             else:
-                ws = tf.Variable( np.array( ws) ,  dtype = tf.float32 )
-                xs = tf.pack( xs , axis = 0 )
+
+                if len(ws) == 0 or len(xs) == 0:
+                    gene.act = tf.Variable(tf.zeros( [] ) , dtype=tf.float32)
+                    gene.set_added_to_graph(added = True )
+                else:
+                    ws = tf.Variable( np.array( ws) ,  dtype = tf.float32 )
+                    xs = tf.pack( xs , axis = 0 )
             
-                gene.act = tf.sigmoid(tf.reduce_sum( tf.mul( xs, ws) )   )
-                gene.set_added_to_graph(added = True )
+                    gene.act = tf.sigmoid(tf.reduce_sum( tf.mul( xs, ws) )   )
+                    gene.set_added_to_graph(added = True )
 
     def update_conns(self, graph_n = None):
 
@@ -228,7 +347,7 @@ class Genome():
         if not session:
             return False
         
-        print("respuesta del grafo")
+        #print("Respuesta del grafo")
         if not inputs:
             return False
 
@@ -238,24 +357,25 @@ class Genome():
         out_val = []
         with self.graph.as_default():
             init = tf.global_variables_initializer()
-            
-         #init = tf.initialize_all_variables()
+            #print(init)
+            session.run(init)
+      
+
+       
         resp = 0
+       
         
-        print( inputs )
-        print( placeholders )
-            
         #with session  as sess:
         for node in self.outputGenes:
                 #sess.run( init , feed_dict =   {} )
             if node.act == None:
                 print("this happen")
-                continue 
-            a =session.run( node.act , feed_dict  = { i : d for i,d in zip( placeholders ,inputs) } )
-                #a =  sess.run( node.act , feed_dict  = { i : d for i,d in zip( placeholders ,inputs) }   ) 
-                #a =  sess.run( node.act , feed_dict  = { placeholders[0] : 1.0 ,  }   ) 
-            out_val.append( a) 
-            out.append( node.act )
+                continue
+            
+            with self.graph.as_default():
+                a = session.run( node.act , feed_dict  = { i : d for i,d in zip( placeholders ,inputs) } )
+                out_val.append( a) 
+                out.append( node.act )
 
             
 
@@ -264,12 +384,15 @@ class Genome():
             
             print (" OUT NODEs GIVE NO  ANWSER")
             return False
+        #print(out_val) 
         if get_index:
             #with session as sess:
-            out = tf.pack( out , axis = 0)
-            out = tf.argmax(out , axis = 0 )
-            resp = int (  session.run( out ) )
+            #out = tf.pack( out , axis = 0)
+            #out = tf.argmax(out , axis = 0 )
+            
+            #resp = int (  session.run( out ) )
             # la respuesta va a ser el indice del de mayor valor
+            resp =  [  out_val.index(max( out_val ) ) ] 
         if get_value:
             resp = out_val
         return resp
@@ -306,19 +429,51 @@ class Genome():
         return self.genome.adjacency_iter()
 
     def clear(self):
-
+        self.inputGenes = []
+        self.outputGenes = [] 
         self.genome.clear()
 
     def add_edges_from(self, nedges):
-
+        
         self.genome.add_edges_from(  nedges )
 
-    def add_nodes_from(self , nnodes):
+    def add_nodes_from(self , nnodes , is_input = False , is_output = False):
 
+        
         self.genome.add_nodes_from(nnodes)
         
-    def mutate_perturbation(self):
+        if is_input:
+            self.inputGenes = nnodes[:]
 
+        if is_output :
+            self.outputGenes = nnodes[:]
+
+            
+
+
+    def mutate_weights(self):
+        
+        for u , vs in self.get_edge_iter():
+            for v , atts in vs.items():
+
+                rnd1 = random.random()
+                if rnd1 <= 0.9:
+                    # muta por perturbacion
+                   
+                    pertb = self.getRnd()
+                    new_weight = ( atts['weight'] + ( pertb*0.5 ) )
+                   
+                    self.genome[u][v]['weight'] = new_weight
+                    continue
+                rnd1 = random.random()
+                if rnd1 <= 0.1 :
+                    # nuevo peso aleatorio 
+                    new_weight = self.getRnd()
+                    self.genome[u][v]['weight'] = new_weight
+
+                
+    def mutate_perturbation(self):
+        #   DEPRECATED 
         #do something
         rnd1 = random.random()
         #rnd2 = random.random()
@@ -326,7 +481,7 @@ class Genome():
         for u , vs in self.get_edge_iter():
             for v , atts in vs.items():
                  
-                new_weight = atts['weight'] + ( rnd1 )
+                new_weight = ( atts['weight'] + ( rnd1*0.5 ) )
                 self.genome[u][v]['weight'] = new_weight
         return 0.0
 
@@ -354,13 +509,15 @@ class Genome():
         return self.outputGenes
     def mutate_new_link(self):
         
-        self.add_conn_rnd()
+        #self.add_conn_rnd()
+        self.add_connection2()
         return 0.0
 
     def mutate_new_node(self):
 
-        Gnew = Gene( 0.0 , graph = self.graph)
-        self.add_gene_rnd( Gnew )
+        #Gnew = Gene( 0.0 , graph = self.graph)
+        #self.add_gene_rnd( Gnew )
+        self.add_node_hidden()
         return 0.0
 
     def feed(self ,  list_inputs ):
@@ -397,7 +554,12 @@ class Genome():
 
         new = nx.relabel_nodes(self.genome , mapping )
         nx.write_gpickle( G =new  , path=path_to)
-        
+
+
+    def getRnd(self):
+
+        return random.uniform(-1 , 1 )
+    
     def Draw(self):
 
         nx.draw(self.genome  )
@@ -405,5 +567,7 @@ class Genome():
 
 
     
+    def new_name(self, size=6, chars=string.ascii_uppercase + string.digits):
         
+        return ''.join(random.choice(chars) for _ in range(size)  )
 

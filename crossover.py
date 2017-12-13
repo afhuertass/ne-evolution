@@ -25,6 +25,8 @@ class Crossover():
        
         g_fitter = None
         g_other = None
+        print("parent1: " + str(genome1.calculated_fitness))
+        print("parent2: " + str(genome2.calculated_fitness ))
         if genome1.calculated_fitness >= genome2.calculated_fitness:
             g_fitter = genome1
             g_other = genome2
@@ -49,13 +51,19 @@ class Crossover():
                            # print("matching!!")
                             ## tiene el mismo numero de inovacion, elegimos aleatoriamente un edge
                             #rr = rnd.random()
-                        
+                            r2 = rnd.random()
                             atts_inh = None
+                            #print("atts p1:")
+                            #print(eatt1)
+                            #print("atts p2:")
+                            #print(eatt2)
+                            
                             if r2 < 0.5:
                                 atts_inh = eatt1
                             else:
                                 atts_inh = eatt2
-                                
+
+                            #print("heredado")
                             #print(atts_inh)
                             matching_edges.append( ( u ,  v , atts_inh )  )
                           
@@ -64,6 +72,8 @@ class Crossover():
                         
                 if matching_count == 0 :
                     # no hubo conteos positivos
+                    #print( eatt1)
+                    """
                     if g_fitter.inovationNumber <=  g_other.inovationNumber:
                         # disjoint
                         disjoint_edges_fitter.append( ( u ,v , eatt1 )   )
@@ -72,6 +82,8 @@ class Crossover():
                         excess_edges_fitter.append( (u,v, eatt1)  )
                         
                         ## no coinciden
+                    """
+                    excess_edges_fitter.append( (u,v,eatt1 )  )
 
         """                        
         print(matching_edges)
@@ -82,12 +94,19 @@ class Crossover():
         Gnew = Genome()
         
         Gnew.clear()
-        Gnew.add_nodes_from( g_fitter.get_input_genes() )
-        Gnew.add_nodes_from( g_fitter.get_output_genes() )
+        Gnew.add_nodes_from( g_fitter.get_input_genes() , is_input = True  )
+        
+        Gnew.add_nodes_from( g_fitter.get_output_genes()  , is_output = True )
+
+
+        
         Gnew.add_edges_from(matching_edges)
         Gnew.add_edges_from( disjoint_edges_fitter )
         Gnew.add_edges_from( excess_edges_fitter )
         Gnew.set_inovation_number( g_fitter.get_inovation_number() )
 
-        Gnew.set_specie( g_fitter.specie )
+        #Gnew.set_specie( g_fitter.specie )
+        Gnew.HLayers = g_fitter.HLayers
+        #Gnew.re_add()
+        
         return Gnew

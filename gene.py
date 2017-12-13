@@ -9,15 +9,18 @@ import tensorflow as tf
 
 
 class Gene():
-    def __init__(self, ws , input_gene = False, output_gene=False ,response =  None , graph = None):
+    def __init__(self, ws , input_gene = False, output_gene=False , bias_gene = False, response =  None , graph = None, indexLayer = 0 ):
         # pesos  y funcion de activacion
-        if not graph:
-            print("QUE PASO EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEee")
-            return
+        
+        #if not graph:
+         #   print("QUE PASO EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEee")
+          #  return
+       
         self.graph = graph 
         self.ws = ws
         self.input_gene = input_gene
         self.output_gene = output_gene
+        self.bias_gene = bias_gene
         self.connex = []
         self.rnd = np.random.randint(10000)
         self.rnd2 = np.random.randint(100)
@@ -36,10 +39,18 @@ class Gene():
         
         """
 
-        self.indexLayer = 0
+        self.indexLayer = indexLayer
+
+        if bias_gene:
+
+            self.act = tf.Variable( tf.constant(1.0 , shape=[] , dtype=tf.float32) , dtype = tf.float32  )
         
         
         
+    def getIndexLayer(self):
+
+        return self.indexLayer 
+    
     def activation2(self, graph = None):
         if not graph:
             print("PLEASE FEED GRAPH")
@@ -108,7 +119,7 @@ class Gene():
         return  hash( self.rnd )^hash(repr( self ) ) 
 
     def __eq__(self, other):
-        
+        print("asdasdasdasdasd")
         return ( self.__hash__ == other.__hash__  and self.rnd == other.rnd and self.rnd2 == other.rnd2 )
 
     def __cmp__(self, other):
